@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>智能对话引擎</title>
+    <link rel="stylesheet" type="text/css" href="/static/style.css">
+    <link rel="shortcut icon" href="/static/llama.png" type="image/x-icon">
+    <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.7.2/highlight.min.js"></script>
+    <script>hljs.initHighlightingOnLoad();</script>
+
+    <style>
+        .message {
+            color: black;
+            font-family: monospace;
+            font-size: 20px;
+            text-align: left;
+            line-height: 30px;
+            width: 100%;
+        }
+
+        .user-message {
+            background-color: #f3f3f3;
+            font-size: 20px;
+            width: 100%;
+        }
+
+        .bot-message {
+            background-color: #d0e8ff;
+            font-size: 20px;
+            width: 100%;
+        }
+
+        pre code {
+            display: block;
+            font-size: 20px;
+            line-height: 1.5;
+            overflow-x: auto;
+            background-color: #f4f4f4;
+            border-radius: 5px;
+            border: 3px solid #ccc;
+            margin-right: auto;
+        }
+
+        .form-control {
+            position: relative;
+            margin: 20px 0 40px;
+            width: 190px;
+        }
+
+        {# 输入框的文本样式 #}
+        .form-control input {
+            background-color: transparent;
+            border: 0;
+            border-bottom: 2px #000 solid;
+            display: block;
+            width: 550px;
+            padding: 10px;
+            font-size: 15px;
+            color: #000;
+        }
+
+        .form-control input:focus,
+        .form-control input:valid {
+            outline: 0;
+            border-bottom-color: #000000;
+        }
+
+        .form-control label {
+            position: absolute;
+            top: 1px;
+            left: 0;
+            pointer-events: none;
+        }
+
+        .form-control label span {
+            display: inline-block;
+            font-size: 15px;
+        {# 18 #} min-width: 1px;
+        {# 5 #} color: #000;
+            transition: 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        }
+
+        .form-control input:focus + label span,
+        .form-control input:valid + label span {
+            color: #000000;
+            transform: translateY(-20px);
+        }
+
+        #user-text-input input {
+            background-color: transparent;
+            border: 0;
+            border-bottom: 2px #000 solid;
+            display: block;
+            width: 100%;
+            padding: 10px;
+            font-size: 15px;
+            color: #000;
+            position: absolute;
+        }
+
+        button {
+            background-color: #008CBA;
+            border-radius: 12px;
+            color: white;
+            padding: 14px 18px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 16px;
+            box-shadow: 0 12px 16px 0 rgba(0, 0, 0, 0.24), 0 17px 50px 0 rgba(0, 0, 0, 0.19);
+        }
+
+        #nav {
+            position: fixed;
+            display: inline-block;
+            top: 30px;
+            bottom: 80px;
+            width: 350px;
+        }
+
+        .myP {
+            color: black;
+            font-size: 20px;
+            margin-top: 3px;
+            text-align: center;
+        }
+
+        .par:hover {
+            width: 300px;
+            height: 30px;
+            margin: 100px auto;
+            font-size: 20px;
+            line-height: 30px;
+            background-color: #ff000020;
+            overflow: hidden;
+            margin-top: -60px;
+            padding-top: 30px;
+        }
+
+
+        #right_nev {
+            position: fixed;
+            display: inline-block;
+            top: 60px;
+            bottom: 10px;
+            width: 100px;
+            margin-left: 70%;
+        }
+
+        .re {
+            position: relative;
+            height: 400px;
+        }
+
+        .re ul {
+            list-style-type: none;
+        }
+
+        .re ul > li {
+            width: 600px;
+            height: 300px;
+            position: absolute;
+
+            transition: 1s;
+            opacity: 0;
+        }
+
+        .re ul > li img {
+            width: 400px;
+            height: 500px;
+            border-radius: 10%;
+            border: 15px solid #fffbd6;
+        }
+
+        #right_nev ol {
+            position: relative;
+            display: grid;
+            grid-template-columns: repeat(5, 75px);
+            grid-template-rows: auto;
+            grid-gap: 1em;
+            gap: 1em;
+            float: right;
+            margin-top: 450px;
+            list-style: none;
+            top: 0;
+            left: 0;
+            margin-left: 80%;
+        }
+
+        #right_nev ol li {
+            width: 25px;
+            height: 10px;
+            font-size: 15px;
+            line-height: 20px;
+            float: left;
+            border-radius: 2em;
+            border: 5px solid #999999;
+            margin-left: 80%;
+        }
+
+        /* 自动轮播样式 */
+        .banner-container {
+            width: 400px;
+            height: 500px;
+            /* 轮播图居中 */
+            margin: 1rem auto;
+            /* 隐藏超出展示容器的内容 */
+            overflow: hidden;
+            position: relative;
+        }
+
+        .banner-container .banner-img-container {
+            width: 6000px;
+            height: 500px;
+            overflow: hidden;
+            position: absolute;
+            /* 开启弹性盒，让图片横向排列 */
+            display: flex;
+            animation: run 25s ease infinite;
+        }
+
+        .banner-container .banner-img-container img {
+            width: 400px;
+            height: 500px;
+        }
+
+        /* 动画关键帧 */
+        @keyframes run {
+            0%, 10% {
+                /* margin-left: 0; */
+                transform: translateX(0);
+            }
+            20%, 30% {
+                /* margin-left: -1200px;; */
+                transform: translateX(-400px);
+            }
+            40%, 50% {
+                /* margin-left: -2400px; */
+                transform: translateX(-800px);
+            }
+            60%, 70% {
+                /* margin-left: -3600px; */
+                transform: translateX(-1200px);
+            }
+            80%, 90% {
+                /* margin-left: -4800px; */
+                transform: translateX(-1600px);
+            }
+            100% {
+                /* margin-left: 0; */
+                transform: translateX(0);
+            }
+        }
+
+        .incline{
+		   width:420px; /*设置元素宽度*/
+		   margin:50px auto; /*设置元素外边距*/
+		   font-size:36px; /*设置字体大小*/
+		   font-weight:bolder; /*设置字体粗细*/
+		   color:#9966FF; /*设置文字颜色*/
+		   -webkit-transform:skew(30deg);/*设置倾斜角度*/
+		}
+
+        .listyle{
+            font-family: FangSong;
+            font-weight: bold;
+            margin: 30px
+        }
+
+        .textstyle{
+
+        }
+
+    </style>
+</head>
+<body>
+<h1 style="z-index: 1">🤖智能对话引擎</h1>
+<h3 id="user-id">来啦，有撒事你说~🤗</h3>
+<div id="chatbox">
+    <div id="messages"></div>
+    <div id="user-input">
+        <form id="user-form">
+            <div class="form-control">
+                <input type="text" id='user-text-input'>
+                <label>
+                    <span style="transition-delay:0ms">在</span>
+                    <span style="transition-delay:50ms">此</span>
+                    <span style="transition-delay:100ms">输</span>
+                    <span style="transition-delay:150ms">入</span>
+                    <span style="transition-delay:200ms">消</span>
+                    <span style="transition-delay:250ms">息</span>
+                </label>
+            </div>
+        </form>
+        <button id="reset-button">新的对话</button> <!-- 添加了一个 Reset Conversation 的按钮 -->
+    </div>
+</div>
+<footer>
+    <p class="myP">Made by <a href="https://github.com/xht252">xuehaotian</a> | <a
+            href="https://gitee.com/xue-haotian252/WebGPT">Soure
+        Code</a></p>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
+<script>
+    $(function () {
+        $('#user-form').submit(function (event) {
+            event.preventDefault();
+            var user_input = $('#user-text-input').val();
+            $('#messages').append('<div class="message user-message">' + user_input + '</div>');
+            $('#messages').append('<div class="message bot-message">正在思考...</div>');
+
+            $.ajax({
+                type: 'POST',
+                url: '/get_response',
+                data: {user_input: user_input},
+                success: function (response) {
+                    $('.bot-message:contains("正在思考...")').remove();
+                    $('#messages').append('<div class="message bot-message">' + response + '</div>');
+                    $('#messages').animate({scrollTop: $('#messages').prop("scrollHeight")}, 1000);
+                    $('pre code').each(function (i, block) {
+                        hljs.highlightBlock(block);
+                    });
+                }
+            });
+            $('#user-text-input').val('');
+        });
+    });
+</script>
+<script>
+    $(function () {
+        // 获取并显示user ID
+        $.ajax({
+            type: 'GET',
+            url: '/get_user_id',
+            success: function (response) {
+                $('#user-id').text('对话 ID: ' + response);
+            }
+        });
+
+        // 点击Reset按钮时重置对话和更新user ID
+        $('#reset-button').click(function () {
+            $.ajax({
+                type: 'GET',
+                url: '/reset',
+                success: function (response) {
+                    $('#messages').empty();
+                    $('#user-id').text('对话 ID: ' + response);
+                }
+            });
+        });
+    });
+</script>
+
+<div id='nav'>
+    <h3 style="font-family: FangSong;font-weight: bold;font-size: 20px;text-align: center;margin-top: 3px">
+        其他大语言模型链接
+    </h3>
+    <ul type='none' style="font-size:20px;margin-left:50px;margin-top:10px;">
+        <li style="font-family: FangSong;font-weight: bold;margin: 30px">
+            其他网页端GPT：
+        </li>
+
+        <li style="font-family: FangSong;font-weight: bold;margin: 30px;">
+            <a href="https://yiyan.baidu.com/"  id="incline" style="color:inherit;">
+                💙文心一言💙
+            </a>
+        </li>
+
+
+        <li style="font-family: FangSong;font-weight: bold;margin: 30px;">
+            <a href="https://chat.openai.com/" style="color:inherit;">
+                👍ChatGPT👍
+            </a>
+        </li>
+
+
+        <li style="font-family: FangSong;font-weight: bold;margin: 30px">
+            开源的大模型:
+        </li>
+
+
+        <li style="font-family: FangSong;font-weight: bold;margin: 30px">
+            <a href="https://hf-mirror.com/" style="color:inherit;">
+                🤗huggingface🤗
+            </a>
+        </li>
+
+        <li style="font-family: FangSong;font-weight: bold;margin: 30px">
+            <a href="https://github.com/clue-ai/ChatYuan" style="color:inherit;">
+                元语AI
+            </a>
+        </li>
+
+
+        <li style="font-family: FangSong;font-weight: bold;margin: 30px">
+            <a href="https://github.com/THUDM/ChatGLM-6B" style="color:inherit;">
+                ChatGLM
+            </a>
+        </li>
+
+        <li style="font-family: FangSong;font-weight: bold;margin: 30px">
+            <a href="https://github.com/nebuly-ai/nebullvm/tree/main/apps/accelerate/chatllama" style="color:inherit;">
+                🦙LLaMa🦙
+            </a>
+        </li>
+
+        <li style="font-family: FangSong;font-weight: bold;margin: 30px">
+            <a href="https://github.com/ymcui/Chinese-LLaMA-Alpaca" style="color:inherit;">
+                🦙Chinese-LLaMA🦙
+            </a>
+        </li>
+
+        <li style="font-family: FangSong;font-weight: bold;margin: 30px">
+            <a href="https://github.com/LianjiaTech/BELLE" style="color:inherit;">
+                BELLE
+            </a>
+        </li>
+
+        <li style="font-family: FangSong;font-weight: bold;margin: 30px">
+            <a href="https://github.com/OpenLMLab/MOSS" style="color:inherit;">
+                MOSS
+            </a>
+        </li>
+
+        <li style="font-family: FangSong;font-weight: bold;margin: 30px">
+            <a href="https://github.com/01-ai/Yi " style="color:inherit;">
+                Yi
+            </a>
+        </li>
+    </ul>
+</div>
+
+<script>
+    window.onload = function () {
+        var box = this.document.getElementsByClassName("re")[0];
+        var lik = box.getElementsByTagName("li");
+
+        function fun(i, j) {
+            //转换图片函数，就是把透明度改了一下
+            lik[i].style.opacity = 1;
+            lik[j].style.opacity = 0;
+            lik[i + 5].style.backgroundColor = "#ffffff";//改一下小图标
+            lik[j + 5].style.backgroundColor = "#00000000"
+        }
+
+        fun(0, 1);//初始化下
+        var i = 0;
+
+        function auto() {//轮播循环函数
+            if (++i >= 5) {
+                i = 0;
+                fun(0, 4);
+            } else fun(i, i - 1);
+        }
+
+        timer = this.setInterval(auto, 2000);
+        box.onmouseover = function () { //鼠标划上去，停止轮播
+            console.log('good');
+            clearInterval(timer);
+        }
+        box.onmouseout = function () { //鼠标划出，继续轮播
+            timer = setInterval(auto, 2000); //调用定时器
+        }
+        var j = 0;
+        for (; j < 5; j++) {//点击小图标也可以转换图片
+            lik[j + 5].ind = j;
+            lik[j + 5].onclick = function () {
+                fun(this.ind, i)
+                i = this.ind;
+            }
+        }
+    }
+</script>
+
+<div id="right_nev">
+    <div class="banner-container">
+        <div class="banner-img-container">
+            <img src="/static/p1.jpg" alt="">
+            <img src="/static/p2.jpg" alt="">
+            <img src="/static/gpt.jpg" alt="">
+            <img src="/static/network.jpg" alt="">
+            <img src="/static/nlp.jpg" alt="">
+        </div>
+    </div>
+</div>
+</body>
+</html>
